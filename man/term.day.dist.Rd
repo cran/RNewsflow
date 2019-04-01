@@ -4,19 +4,14 @@
 \alias{term.day.dist}
 \title{Calculate statistics for term occurence across days}
 \usage{
-term.day.dist(dtm, meta, id.var = "document_id", date.var = "date")
+term.day.dist(dtm, meta = NULL, date.var = "date")
 }
 \arguments{
-\item{dtm}{A document-term matrix in the tm \link[tm]{DocumentTermMatrix} class or a TsparseMatrix from the Matrix class (\link[Matrix]{spMatrix})}
+\item{dtm}{A quanteda \link[quanteda]{dfm}. Alternatively, a DocumentTermMatrix from the tm package can be used, but then the meta parameter needs to be specified manually}
 
-\item{meta}{A data.frame where rows are documents and columns are document meta information. 
-Should contain 2 columns: the document name/id and date. 
-The name/id column should match the rownames (i.e. document names) of the DTM, and its label is specified in the `id.var` argument. 
-The date column should be intepretable with \link[base]{as.POSIXct}, and its label is specified in the `date.var` argument.}
+\item{meta}{If dtm is a quanteda dfm, docvars(meta) is used by default (meta is NULL) to obtain the meta data. Otherwise, the meta data.frame has to be given by the user, with the rows of the meta data.frame matching the rows of the dtm (i.e. each row is a document)}
 
-\item{id.var}{The label for the document name/id column in the `meta` data.frame. Default is "document_id"}
-
-\item{date.var}{The label for the document date column in the `meta` data.frame . default is "date"}
+\item{date.var}{The name of the meta column specifying the document date. default is "date". The values should be of type POSIXlt or POSIXct}
 }
 \value{
 A data.frame with statistics for each term.
@@ -33,11 +28,7 @@ A data.frame with statistics for each term.
 Calculate statistics for term occurence across days
 }
 \examples{
-data(dtm)
-data(meta)
-
-tdd = term.day.dist(dtm, meta)
+tdd = term.day.dist(rnewsflow_dfm, date.var='date')
 head(tdd)
 tail(tdd)
 }
-

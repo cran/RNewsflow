@@ -42,8 +42,8 @@ Nothing.
 Visualize (a subcomponent) of the document similarity network
 }
 \examples{
-data(docnet)
-data(dtm)
+docnet = docnet
+dtm = rnewsflow_dfm
 
 docnet_comps = igraph::decompose.graph(docnet) # get subcomponents
 
@@ -56,4 +56,3 @@ document.network.plot(docnet_comps[[2]], dtm=dtm)
 # subcomponent 3 with additional arguments passed to plot.igraph 
 document.network.plot(docnet_comps[[3]], dtm=dtm, vertex.color='red') 
 }
-

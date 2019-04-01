@@ -4,26 +4,21 @@
 \alias{delete.duplicates}
 \title{Delete duplicate (or similar) documents from a document term matrix}
 \usage{
-delete.duplicates(dtm, meta, id.var = "document_id", date.var = "date",
-  source.var = "source", hour.window = c(-24, 24), measure = "cosine",
-  similarity = 1, keep = "first", tf.idf = FALSE)
+delete.duplicates(dtm, meta = NULL, date.var = "date",
+  hour.window = c(-24, 24), group.var = NULL, measure = c("cosine",
+  "overlap_pct"), similarity = 1, keep = "first", tf.idf = FALSE,
+  dup_csv = NULL, verbose = F)
 }
 \arguments{
-\item{dtm}{A document-term matrix in the tm \link[tm]{DocumentTermMatrix} class. It is recommended to weight the DTM beforehand, for instance using \link[tm]{weightTfIdf}.}
+\item{dtm}{A quanteda \link[quanteda]{dfm}. Alternatively, a DocumentTermMatrix from the tm package can be used, but then the meta parameter needs to be specified manually}
 
-\item{meta}{A data.frame where rows are documents and columns are document meta information. 
-Should contain 3 columns: the document name/id, date and source. 
-The name/id column should match the document names/ids of the edgelist, and its label is specified in the `id.var` argument. 
-The date column should be intepretable with \link[base]{as.POSIXct}, and its label is specified in the `date.var` argument.            
-The source column is specified in the `date.var` argument.}
+\item{meta}{If dtm is a quanteda dfm, docvars(meta) is used by default (meta is NULL) to obtain the meta data. Otherwise, the meta data.frame has to be given by the user, with the rows of the meta data.frame matching the rows of the dtm (i.e. each row is a document)}
 
-\item{id.var}{The label for the document name/id column in the `meta` data.frame. Default is "document_id"}
+\item{date.var}{The name of the column in meta that specifies the document date. default is "date". The values should be of type POSIXlt or POSIXct}
 
-\item{date.var}{The label for the document date column in the `meta` data.frame . default is "date"}
+\item{hour.window}{A vector of length 2, in which the first and second value determine the left and right side of the window, respectively. For example, c(-10, 36) will compare each document to all documents between the previous 10 and the next 36 hours.}
 
-\item{source.var}{The label for the document date column in the `meta` data.frame . default is "source"}
-
-\item{hour.window}{A vector of length 2, in which the first and second value determine the left and right side of the window, respectively. By default c(-24,24), which compares each document to all other documents within a 24 hour time distance.}
+\item{group.var}{Optionally,  The name of the column in meta that specifies a group (e.g., source, sourcetype). If given, only documents within the same group will be compared.}
 
 \item{measure}{the measure that should be used to calculate similarity/distance/adjacency. Currently supports the symmetrical measure "cosine" (cosine similarity), and the assymetrical measures "overlap_pct" (percentage of term scores in the document that also occur in the other document).}
 
@@ -32,6 +27,10 @@ The source column is specified in the `date.var` argument.}
 \item{keep}{A character indicating whether to keep the 'first' or 'last' published of duplicate documents.}
 
 \item{tf.idf}{if TRUE, weight the dtm with tf.idf before comparing documents. The original (non-weighted) DTM is returned.}
+
+\item{dup_csv}{Optionally, a path for writing a csv file with the duplicates edgelist. For each duplicate pair it is noted if "from" or "to" is the duplicate, or if "both" are duplicates (of other documents)}
+
+\item{verbose}{if TRUE, report progress}
 }
 \value{
 A dtm with the duplicate documents deleted
@@ -45,10 +44,6 @@ Note that this can also be used to delete "updates" of articles (e.g., on news s
 This should be considered if the temporal order of publications is relevant for the analysis.
 }
 \examples{
-data(dtm)
-data(meta)
-
 ## example with very low similarity threshold (normally not recommended!)
-dtm2 = delete.duplicates(dtm, meta, similarity = 0.5, keep='first', tf.idf = TRUE)
+dtm2 = delete.duplicates(rnewsflow_dfm, similarity = 0.5, keep='first', tf.idf = TRUE)
 }
-

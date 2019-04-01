@@ -5,26 +5,34 @@ dtmToSparseMatrix <- function(dtm){
   sm
 }
 
-confirm.dtm.meta <- function(meta, id.var, date.var){
-  if(!id.var %in% colnames(meta)) stop(sprintf('Meta data.frame should contain a column that matches the id.var parameter (currently set to "%s")', id.var))
-  if(!date.var %in% colnames(meta)) stop(sprintf('Meta data.frame should contain a column that matches the id.var parameter (currently set to "%s")', date.var))
+pad_dfm <- function(dfm, cnames) {
+  ## not pretty, but quanteda:::pad_dfm is not exported
+  is_dfm = methods::is(dfm, 'dfm')
+  if (is_dfm) dv = quanteda::docvars(dfm)
+  rnames = rownames(dfm)
+  dfm = methods::as(dfm, 'dgTMatrix')
+  colindex = match(colnames(dfm), cnames)
+  isna = is.na(colindex[dfm@j+1])
+  out = Matrix::spMatrix(nrow(dfm), length(cnames), i=dfm@i[!isna]+1, j=colindex[dfm@j[!isna]+1], x = dfm@x[!isna])
+  out = methods::as(out, 'dgCMatrix')
+  if (is_dfm) out = quanteda::as.dfm(out)
+  rownames(out) = rnames
+  colnames(out) = cnames
+  if (is_dfm)
+    if (nrow(dv) > 0) quanteda::docvars(out) = dv
+  out
 }
 
 match.dtm.meta <- function(dtm, meta, id.var){
-  if(mean(rownames(dtm) %in% meta[,id.var]) < 1) stop('Not all documents in DTM match with a document in the meta data.frame')
+  if(!all(rownames(dtm) %in% meta[,id.var])) stop('Not all documents in DTM match with a document in the meta data.frame')
   meta[match(rownames(dtm), meta[,id.var]),]
 }
 
-
 #' Calculate statistics for term occurence across days
 #'
-#' @param dtm A document-term matrix in the tm \link[tm]{DocumentTermMatrix} class or a TsparseMatrix from the Matrix class (\link[Matrix]{spMatrix}) 
-#' @param meta A data.frame where rows are documents and columns are document meta information. 
-#' Should contain 2 columns: the document name/id and date. 
-#' The name/id column should match the rownames (i.e. document names) of the DTM, and its label is specified in the `id.var` argument. 
-#' The date column should be intepretable with \link[base]{as.POSIXct}, and its label is specified in the `date.var` argument.            
-#' @param id.var The label for the document name/id column in the `meta` data.frame. Default is "document_id"
-#' @param date.var The label for the document date column in the `meta` data.frame . default is "date"
+#' @param dtm A quanteda \link[quanteda]{dfm}. Alternatively, a DocumentTermMatrix from the tm package can be used, but then the meta parameter needs to be specified manually
+#' @param meta If dtm is a quanteda dfm, docvars(meta) is used by default (meta is NULL) to obtain the meta data. Otherwise, the meta data.frame has to be given by the user, with the rows of the meta data.frame matching the rows of the dtm (i.e. each row is a document)
+#' @param date.var The name of the meta column specifying the document date. default is "date". The values should be of type POSIXlt or POSIXct
 #'
 #' @return A data.frame with statistics for each term.
 #' \itemize{
@@ -38,25 +46,33 @@ match.dtm.meta <- function(dtm, meta, id.var){
 #' @export
 #'
 #' @examples
-#' data(dtm)
-#' data(meta)
-#' 
-#' tdd = term.day.dist(dtm, meta)
+#' tdd = term.day.dist(rnewsflow_dfm, date.var='date')
 #' head(tdd)
 #' tail(tdd)
-term.day.dist <- function(dtm, meta, id.var='document_id', date.var='date'){
-  confirm.dtm.meta(meta, id.var, date.var)
-  meta = match.dtm.meta(dtm, meta, id.var)
+term.day.dist <- function(dtm, meta=NULL, date.var='date'){
+  if (is.null(meta)) meta = quanteda::docvars(dtm)
+  dtm = quanteda::as.dfm(dtm)
+  dtm = methods::as(dtm, 'dgTMatrix')
+  if (!date.var %in% colnames(meta)) stop('The name specified in date.var is not a valid dfm docvar')
   
-  if('DocumentTermMatrix' %in% class(dtm)) dtm = dtmToSparseMatrix(dtm)
+  document.date = as.Date(meta[[date.var]])
+  
+  if (any(is.na(document.date))) {
+    message("date contains NA. These documents will be ignored")
+    filter = !is.na(document.date)
+    dtm = dtm[filter,]
+    document.date = document.date[filter]
+  }
   
   cs = Matrix::colSums(dtm)
-  if(sum(cs == 0) > 0) {
+  if(any(cs == 0)) {
     message("dtm contains empty columns/terms. These will be ignored (and won't appear in the output)")
-    dtm = dtm[,slam::col_sums(dtm) > 0]
+    filter = Matrix::colSums(dtm) > 0
+    dtm = dtm[,filter]
   } 
-
-  document.date = as.Date(meta[,date.var])
+  
+  
+  
   dateseq = seq.Date(min(document.date), max(document.date), by='days')
   i = document.date[dtm@i+1]
   i = match(i, dateseq)
@@ -77,3 +93,13 @@ term.day.dist <- function(dtm, meta, id.var='document_id', date.var='date'){
   rownames(d) = NULL
   d
 }
+
+
+
+#x = rpois(100, 1)
+#mean = mean(x)
+#sd = sd(x)
+#ra = ( mean + sqrt( mean^2 + 4*sd^2 ) ) / ( 2 * sd^2 )
+#sh = 1 + mean * ra
+#plot(x, dgamma(x, sh, ra))
+

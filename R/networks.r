@@ -14,7 +14,7 @@
 #' The date column should be intepretable with \link[base]{as.POSIXct}, and its label is specified in the `date.var` argument.            
 #' @param id.var The label for the document name/id column in the `meta` data.frame. Default is "document_id"
 #' @param date.var The label for the document date column in the `meta` data.frame . default is "date"
-#' @param min.similarity For convenience, ignore all edges where the weight is below `min.similarity`. Default is zero.
+#' @param min.similarity For convenience, ignore all edges where the weight is below `min.similarity`. 
 #'
 #' @return A network/graph in the \link[igraph]{igraph} class
 #' @export
@@ -33,22 +33,30 @@
 #' 
 #' igraph::get.data.frame(g, 'both')
 #' igraph::plot.igraph(g)
-document.network <- function(d, meta, id.var='document_id', date.var='date', min.similarity=0){
-  confirm.dtm.meta(meta, id.var, date.var)
+document.network <- function(d, meta, id.var='document_id', date.var='date', min.similarity=NA){
+  if (!date.var %in% colnames(meta)) stop('The name specified in date.var is not a column in meta')
+  if (!id.var %in% colnames(meta)) stop('The name specified in id.var is not a column in meta')
+  
+  if (nrow(d) == 0) d = data.frame(x=numeric(), y=numeric(), similarity=numeric())
   
   colnames(d) = c('x','y','similarity')
-  d = d[d$similarity >= min.similarity, c('x','y','similarity')]
-  d = d[order(-d$similarity),]
   
+  if (!is.na(min.similarity)) d = d[d$similarity >= min.similarity, c('x','y','similarity')]
+  if (is.data.table(d)) {
+    d = data.table::setorderv(d, cols='similarity', order = -1)
+  } else {
+    d = d[order(-d$similarity),]
+  }
+
   g = igraph::graph.data.frame(d[,c('x','y')])
   igraph::E(g)$weight = d$similarity
-  
-  if(mean(igraph::V(g)$name %in% meta[,id.var]) < 1) stop("Not all documents in d match with an 'id' in the meta information")
+  if (nrow(d) > 0)
+    if (!all(igraph::V(g)$name %in% meta[[id.var]])) stop("Not all documents in d match with an 'id' in the meta information")
   
   ## add documents in meta data.frame that do not appear in the edgelist (in other words, isolates)
   missingmeta = as.character(meta[!meta[,id.var] %in% igraph::V(g)$name, id.var])
   g = igraph::add.vertices(g, nv = length(missingmeta), attr = list(name=missingmeta))
-
+  
   meta = meta[match(igraph::V(g)$name, meta[,id.var]),]
   attribs = colnames(meta)[!colnames(meta) == id.var]
   for(attrib in attribs){
@@ -57,8 +65,9 @@ document.network <- function(d, meta, id.var='document_id', date.var='date', min
   
   edgelist = igraph::get.edges(g, igraph::E(g))
   dates = as.POSIXct(igraph::V(g)$date) 
-  igraph::E(g)$hourdiff = round(difftime(dates[edgelist[,2]], dates[edgelist[,1]], units = 'hours'),3)
-  
+  #igraph::E(g)$hourdiff = round(difftime(dates[edgelist[,2]], dates[edgelist[,1]], units = 'hours'),3)
+  dates = as.numeric(dates)
+  igraph::E(g)$hourdiff = round((dates[edgelist[,2]] - dates[edgelist[,1]]) / (60*60), 3)
   g
 }
 
@@ -81,8 +90,8 @@ document.network <- function(d, meta, id.var='document_id', date.var='date', min
 #' @export
 #'
 #' @examples
-#' data(docnet)
-#' data(dtm)
+#' docnet = docnet
+#' dtm = rnewsflow_dfm
 #' 
 #' docnet_comps = igraph::decompose.graph(docnet) # get subcomponents
 #' 
@@ -109,8 +118,9 @@ document.network.plot <- function(g, date.attribute='date', source.attribute='so
   cluster = igraph::delete.vertices(cluster, which(!igraph::V(cluster)$source %in% sources))
   
   if(!is.null(dtm)){
+    dtm = quanteda::as.dfm(dtm)
     graphics::layout(matrix(c(1, 1, 2, 2), 2, 2, byrow = TRUE), widths = c(1.5, 2.5), heights = c(1, 2))  
-    topwords = slam::col_sums(dtm[rownames(dtm) %in% igraph::V(cluster)$name,])
+    topwords = Matrix::colSums(dtm[rownames(dtm) %in% igraph::V(cluster)$name,])
     topwords = topwords[topwords > 0, drop=FALSE]
     topwords = head(topwords[order(-topwords)], 10)
     graphics::par(mar = c(0,0,0,0))
@@ -333,6 +343,7 @@ only.first.match <- function(g){
 #' @param edge.attribute Select an edge attribute to aggregate using the function specified in `agg.FUN`. Defaults to 'weight'
 #' @param agg.FUN The function used to aggregate the edge attribute
 #' @param return.df Optional. If TRUE, the results are returned as a data.frame. This can in particular be convenient if by.from and by.to are used.
+#' @param keep_isolates if True, also return scores for isolates
 #'
 #' @return A network/graph in the \link[igraph]{igraph} class, or a data.frame if return.df is TRUE.
 #' @export
@@ -346,14 +357,14 @@ only.first.match <- function(g){
 #' 
 #' aggdocdf = network.aggregate(docnet, by.from='sourcetype', by.to='source', return.df = TRUE)
 #' head(aggdocdf)
-network.aggregate <- function(g, by=NULL, by.from=by, by.to=by, edge.attribute='weight', agg.FUN=mean, return.df=FALSE){
+network.aggregate <- function(g, by=NULL, by.from=by, by.to=by, edge.attribute='weight', agg.FUN=mean, return.df=FALSE, keep_isolates=T){
   igraph::V(g)$any_vertex = '---'
   if(is.null(by.from)) by.from = 'any_vertex'
   if(is.null(by.to)) by.to = 'any_vertex'
   
   e = data.frame(igraph::get.edges(g, igraph::E(g)))
   v = igraph::get.data.frame(g, 'vertices')  
-  
+
   e = cbind(e, v[e$X1, by.from, drop=FALSE])
   e = cbind(e, v[e$X2, by.to, drop=FALSE])
   colnames(e) = c('from','to', paste('from', by.from, sep='.'), paste('to', by.to, sep='.'))
@@ -371,8 +382,6 @@ network.aggregate <- function(g, by=NULL, by.from=by, by.to=by, edge.attribute='
                by= eval(paste(aggvars, collapse=','))]
   e = as.data.frame(e)
   
-
-  
   colnames(e)[colnames(e) == 'edge.attribute'] = paste('agg',edge.attribute, sep='.')
   
   # match total vertices
@@ -386,7 +395,7 @@ network.aggregate <- function(g, by=NULL, by.from=by, by.to=by, edge.attribute='
   e$to.Vprop = e$to.V / e$to.N
   
   if(!return.df) {
-    e = return.network.aggregate(e)
+    e = return.network.aggregate(e, from.totals, to.totals, keep_isolates)
     if('any_vertex' %in% names(igraph::vertex.attributes(e))) e = igraph::delete_vertex_attr(e, 'any_vertex')
     return(e)
   }
@@ -399,7 +408,7 @@ network.aggregate <- function(g, by=NULL, by.from=by, by.to=by, edge.attribute='
   }
 }
 
-return.network.aggregate <- function(g.df){
+return.network.aggregate <- function(g.df, from.totals, to.totals, keep_isolates){
   vnames = colnames(g.df)[1:(grep('^edges$', colnames(g.df))-1)]
   
   # create network
@@ -433,6 +442,28 @@ return.network.aggregate <- function(g.df){
   for(metavar in metavars[!metavars == 'name']){
     g.agg = igraph::set.vertex.attribute(g.agg, metavar, value=meta[meta_i,metavar])
   }
+  
+  if(keep_isolates){
+    v = get.data.frame(g.agg, 'vertices')
+    colnames(from.totals) = gsub('from.N', 'N', colnames(from.totals), fixed=T)
+    missing_from = merge(from.totals, v, by=colnames(from.totals), all.x=T)
+    missing_from = data.frame(missing_from[is.na(missing_from$name),,drop=F])
+    if(nrow(missing_from) > 0){
+      namecols = colnames(from.totals)[!colnames(from.totals) == 'N']
+      missing_from$name = if(ncol(missing_from[,namecols,drop=F]) > 1) apply(missing_from[,namecols,drop=F], MARGIN = 1, paste, collapse='; ') else missing_from[,1]
+      g.agg = add.vertices(g.agg, nrow(missing_from), attr=as.list(missing_from))
+    } 
+    v = get.data.frame(g.agg, 'vertices')
+    colnames(from.totals) = gsub('from.N', 'N', colnames(from.totals), fixed=T)
+    missing_from = merge(from.totals, v, by=colnames(from.totals), all.x=T)
+    missing_from = data.frame(missing_from[is.na(missing_from$name),,drop=F])
+    if(nrow(missing_from) > 0){
+      namecols = colnames(from.totals)[!colnames(from.totals) == 'N']
+      missing_from$name = if(ncol(missing_from[,namecols,drop=F]) > 1) apply(missing_from[,namecols,drop=F], MARGIN = 1, paste, collapse='; ') else missing_from[,1]
+      g.agg = add.vertices(g.agg, nrow(missing_from), attr=as.list(missing_from))
+    }
+  }
+  
   g.agg
 }
 
