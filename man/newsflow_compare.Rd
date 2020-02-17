@@ -4,11 +4,20 @@
 \alias{newsflow_compare}
 \title{Create a network of document similarities over time}
 \usage{
-newsflow_compare(dtm, dtm_y = NULL, date_var = "date",
-  hour_window = c(-24, 24), group_var = NULL, measure = c("cosine",
-  "overlap_pct", "overlap", "crossprod", "softcosine", "query_lookup",
-  "query_lookup_pct"), tf_idf = F, min_similarity = 0,
-  n_topsim = NULL, only_complete_window = T, ...)
+newsflow_compare(
+  dtm,
+  dtm_y = NULL,
+  date_var = "date",
+  hour_window = c(-24, 24),
+  group_var = NULL,
+  measure = c("cosine", "overlap_pct", "overlap", "crossprod", "softcosine",
+    "query_lookup", "query_lookup_pct"),
+  tf_idf = F,
+  min_similarity = 0,
+  n_topsim = NULL,
+  only_complete_window = T,
+  ...
+)
 }
 \arguments{
 \item{dtm}{A quanteda \link[quanteda]{dfm}. Note that it is common to first weight the dtm(s) before calculating document similarity,
@@ -49,8 +58,6 @@ This is a wrapper for the \code{\link{compare_documents}} function, specialised 
 The difference is that using date_var is mandatory, and the output is returned as an igraph network (using \code{\link{as_document_network}}).
 }
 \examples{
-rnewsflow_dfm 
-
 dtm = quanteda::dfm_tfidf(rnewsflow_dfm)
 el = newsflow_compare(dtm, date_var='date', hour_window = c(0.1, 36))
 }

@@ -4,16 +4,34 @@
 \alias{tcrossprod_sparse}
 \title{tcrossprod with benefits, for people that like parameters}
 \usage{
-tcrossprod_sparse(m, m2 = NULL, min_value = NULL, max_value = NULL,
-  only_upper = F, diag = T, top_n = NULL, rowsum_div = F,
-  max_p = 1, pvalue = c("none", "normal", "lognormal", "nz_normal",
-  "nz_lognormal", "disparity"), normalize = c("none", "l2", "softl2"),
+tcrossprod_sparse(
+  m,
+  m2 = NULL,
+  min_value = NULL,
+  max_value = NULL,
+  only_upper = F,
+  diag = T,
+  top_n = NULL,
+  rowsum_div = F,
+  max_p = 1,
+  pvalue = c("none", "normal", "lognormal", "nz_normal", "nz_lognormal", "disparity"),
+  normalize = c("none", "l2", "softl2"),
   crossfun = c("prod", "min", "softprod", "maxproduct", "lookup"),
-  group = NULL, group2 = NULL, date = NULL, date2 = NULL,
-  lwindow = -1, rwindow = 1, date_unit = c("days", "hours",
-  "minutes", "seconds"), simmat = NULL, simmat_thres = NULL,
-  row_attr = F, col_attr = F, lag_attr = F, batchsize = 1000,
-  verbose = F)
+  group = NULL,
+  group2 = NULL,
+  date = NULL,
+  date2 = NULL,
+  lwindow = -1,
+  rwindow = 1,
+  date_unit = c("days", "hours", "minutes", "seconds"),
+  simmat = NULL,
+  simmat_thres = NULL,
+  row_attr = F,
+  col_attr = F,
+  lag_attr = F,
+  batchsize = 1000,
+  verbose = F
+)
 }
 \arguments{
 \item{m}{A dgCMatrix}
@@ -88,10 +106,10 @@ much sacrificed here for the convenience of being able to keep adding features t
 Enables limiting row combinations to within specified groups 
 and date windows, and filters results that do not pass the threshold on the fly.
 To achieve this, options for similarity measures are included in the function.
-For example, to get the cosine similarity, you can normalize with "l2" and use the "prod" (product) function for the
+For example, to get the cosine similarity, you can normalize with "l2" and use the "prod" (product) function for the   
 
 This function is called by the document comparison functions (documents.compare, newsflow.compare, delete.duplicates).
-We only expose it here for additional flexibility, and because it could be usefull outside of the purpose of this package.
+We only expose it here for additional flexibility, and because it could be usefull outside of the purpose of this package. 
 
 The output matrix also has an attribute "margin", which contains margin scores (e.g., row_sum) if the row_attr or col_attr arguments are used.
 The reason for including this is that some values that are normally available in the output of a cross product are broken if certain filter options are used.
