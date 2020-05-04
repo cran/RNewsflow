@@ -14,9 +14,10 @@ tcrossprod_sparse(
   top_n = NULL,
   rowsum_div = F,
   max_p = 1,
-  pvalue = c("none", "normal", "lognormal", "nz_normal", "nz_lognormal", "disparity"),
+  pvalue = c("disparity", "normal", "lognormal", "nz_normal", "nz_lognormal"),
   normalize = c("none", "l2", "softl2"),
-  crossfun = c("prod", "min", "softprod", "maxproduct", "lookup"),
+  crossfun = c("prod", "min", "softprod", "maxproduct", "lookup", "cp_lookup",
+    "cp_lookup_norm"),
   group = NULL,
   group2 = NULL,
   date = NULL,
@@ -48,21 +49,23 @@ tcrossprod_sparse(
 
 \item{top_n}{An integer, specifying the top number of strongest similarities per row. So, for each row in m at most top_n scores are returned..}
 
-\item{rowsum_div}{If true, divide crossproduct by column sums of m. (this has to happen within the loop for min_value and top_n filtering)}
+\item{rowsum_div}{If true, divide crossproduct by column sums of m. (this has to happen within the loop for min_value and top_n filtering).}
 
 \item{max_p}{A threshold for maximium p value.}
 
 \item{pvalue}{If max_p < 1, edges are removed based on a p value. For each document in dtm, a p value is calculated over its outward edges. 
 Default is the p-value based on uniform distribution, akin to a "disparity" filter (see \href{https://www.pnas.org/content/106/16/6483.full}{Serrano et al.}) but without filtering on inward edges.}
 
-\item{normalize}{Normalize rows by a given norm score. Default is 'none' (no normalization). 'l2' is the l2 norm (use in combination with 'prod' crossfun for cosine similarity). 'l2soft' is the adaptation of l2 for soft similarity (use in combination with 'softprod' crossfun for soft cosine)}
+\item{normalize}{Normalize rows by a given norm score (before calculating similarity). Default is 'none' (no normalization). 'l2' is the l2 norm (use in combination with 'prod' crossfun for cosine similarity). 
+'l2soft' is the adaptation of l2 for soft similarity (use in combination with 'softprod' crossfun for soft cosine).}
 
 \item{crossfun}{The function used in the vector operations. 
 Normally this is the "prod", for product (dot product). 
 Here we also allow the "min", for minimum value. 
 We use this in our document overlap_pct score.
 In addition, there is the (experimental) softprod, that can be used in combination with softl2 normalization to get the soft cosine similarity.
-And, the "maxproduct" is a special case used in the query_lookup measure, that uses product but only returns the score of the strongest matching term.}
+The "maxproduct" is a special case used in the query_lookup measure, that uses product but only returns the score of the strongest matching term. 
+The "cp_lookup" and "cp_lookup_norm" are special cases for conditional probability sensitive lookup.}
 
 \item{group}{Optionally, a character vector that specifies a group (e.g., source) for each row in m. If given, only pairs of rows with the same group are calculated.}
 

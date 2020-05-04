@@ -1,8 +1,7 @@
 Package: RNewsflow
 Type: Package
 Title: Tools for Comparing Text Messages Across Time and Media
-Version: 1.2.3
-Date: 2020-02-16
+Version: 1.2.4
 Author: Kasper Welbers & Wouter van Atteveldt
 Maintainer: Kasper Welbers <kasperwelbers@gmail.com>
 Description: A collection of tools for measuring the similarity of text messages and tracing the flow of messages over
@@ -14,11 +13,11 @@ Imports: stringi, scales, wordcloud, data.table (>= 1.10.4), methods,
 LinkingTo: Rcpp, RcppEigen, RcppProgress
 LazyData: true
 SystemRequirements: C++11
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 Encoding: UTF-8
 NeedsCompilation: yes
-Packaged: 2020-02-16 16:02:09 UTC; kasper
+Packaged: 2020-05-04 10:12:19 UTC; kasper
 Repository: CRAN
-Date/Publication: 2020-02-17 16:40:22 UTC
+Date/Publication: 2020-05-04 10:50:07 UTC

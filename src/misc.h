@@ -31,7 +31,7 @@ bool sort_pair_high ( const std::pair<T,int>& a, const std::pair<T,int>& b) {ret
 
 template <typename T1, typename T2>
 std::vector<std::tuple<T1,T2,int> > index_and_sort(std::vector<T1>& x, std::vector<T2>& y) {
-  if (!x.size() == y.size()) stop("x and y are not of the same length");
+  if (!(x.size() == y.size())) stop("x and y are not of the same length");
   std::vector<std::tuple<T1,T2,int> > xi(x.size());
   
   for (int i = 0; i < x.size(); i++) {
@@ -53,7 +53,6 @@ std::vector<std::pair<T,int> > index_and_sort_top_n(std::vector<T>& x, int top_n
   return(xi);
 }
 
-std::vector<double> batch_softcos_mag_prepare(const Eigen::SparseMatrix<double>& m2_batch, const Eigen::SparseMatrix<double>& batch_simmat);
 Eigen::SparseMatrix<double> batch_simmat_prepare(Eigen::SparseMatrix<double>& m2_batch, const Eigen::SparseMatrix<double>& simmat);
 
 Eigen::SparseMatrix<double> sm_prepare(Eigen::SparseMatrix<double>& m, std::vector<std::tuple<double,double,int> > index, const Eigen::SparseMatrix<double>& simmat, bool transpose, std::string normalize);
