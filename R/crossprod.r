@@ -159,10 +159,9 @@ tcrossprod_sparse <- function(m, m2=NULL,
       }
     }
   } else if (crossfun %in% c('cp_lookup','cp_lookup_norm')) {
-    ## this is a special scenario, and currently we're still testing how usefull it is.
+    ## this is a special scenario, and currently we're still testing how useful it is.
     ## if it works, I'll tidy this up.
-    
-    simmat = prepare_cp_lookup_matrix(m, m2, id_from = 'm2')
+    simmat = prepare_cp_lookup_matrix(m, m2, idf_from = 'm2')
   } else {
     simmat = methods::as(Matrix::spMatrix(0,0), 'dgCMatrix')
   }

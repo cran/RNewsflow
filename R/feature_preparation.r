@@ -21,7 +21,7 @@
 #' Several options are given to only create term combinations that are informative. Firstly, a minimum and maximum document frequency of term combinations can be defined. 
 #' Secondly, a minimum observed/expected ratio can be given. The expected probability of a combination of term A and term B
 #' is the joint probability. If the observed probability is not higher, the combination is not more informative than chance.
-#' Thirdly, before intersecting terms, one can first cluster very similar terms together as single columns to reduct the number
+#' Thirdly, before intersecting terms, one can first cluster very similar terms together as single columns to reduce the number
 #' of possible combinations. 
 #'
 #' @param dtm          A quanteda \link[quanteda]{dfm}
@@ -94,7 +94,7 @@ create_queries <- function(dtm, ref_dtm=NULL, min_docfreq=2, max_docprob=0.01, w
                                        min_docfreq=1)
       nz = which(simmat2 > 0)
       dropval = nz[simmat_filter[nz] == 0]
-      simmat2[dropval] = 0
+      simmat2@x[dropval] = 0
       simmat2 = Matrix::drop0(simmat2)
     }
     
@@ -196,7 +196,7 @@ match_simmat_terms <- function(dtm, simmat) {
 term_union <- function(dtm, simmat, as_dfm=T, verbose=F, sep='|', par=NA) {
   if (methods::is(dtm, "DocumentTermMatrix")) stop('this function does not work for tm DocumentTermMatrix class')
   #simmat = match_simmat_terms(dtm, simmat)
-  dtm = quanteda::dfm_match(dtm, colnames(simmat))
+  dtm = quanteda::dfm_match(quanteda::as.dfm(dtm), colnames(simmat))
 
   parentheses = if (is.na(par)) grepl('[&]', colnames(dtm)) else par
   ml = term_union_cpp(dtm, simmat, colnames(dtm), parentheses, verbose, sep)
@@ -233,7 +233,7 @@ term_union <- function(dtm, simmat, as_dfm=T, verbose=F, sep='|', par=NA) {
 term_intersect <- function(dtm, simmat, as_dfm=T, verbose=F, sep=' & ', par=NA) {
   if (methods::is(dtm, "DocumentTermMatrix")) stop('this function does not work for tm DocumentTermMatrix class')
   #simmat = match_simmat_terms(dtm, simmat)
-  dtm <- quanteda::dfm_match(dtm, colnames(simmat))
+  dtm <- quanteda::dfm_match(quanteda::as.dfm(dtm), colnames(simmat))
 
   parentheses = if (is.na(par)) grepl('[|]', colnames(dtm)) else par
   ml = term_intersect_cpp(dtm, simmat, colnames(dtm), parentheses, verbose, sep)
