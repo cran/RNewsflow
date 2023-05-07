@@ -1,17 +1,17 @@
 entropy <- function(x) {
   x = x/sum(x)
-  prod((1/x)^x)
+  -sum(x * log(x), na.rm = T)
 }
 
 columnEntropy <- function(m){
-  m = methods::as(m, 'dgTMatrix')
+  m = methods::as(methods::as(m, 'generalMatrix'), 'TsparseMatrix')
   m@x = m@x / Matrix::colSums(m)[m@j+1]
-  m@x = (1/m@x)^m@x
-  tapply(m@x, m@j, prod)
+  m@x = m@x * log(m@x)
+  -tapply(m@x, m@j, sum, na.rm=T)
 }
 
 # get 1-day halflife decay
-exp.decay <- function(r, decay_constant=log(2), halflife=NULL) {
+exp_decay <- function(r, decay_constant=log(2), halflife=NULL) {
   if(!is.null(halflife)) decay_constant = -(log(0.5) / halflife) 
   exp(-r*decay_constant)
 }

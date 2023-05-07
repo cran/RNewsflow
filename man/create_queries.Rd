@@ -64,7 +64,7 @@ This is not a problem as long as the similarity of the documents in dtm to docum
 as an assymetric similarity measure (i.e. in which the sum of terms in dtm_y is not used). 
 
 To emphasize that this feature preparation step is geared towards the task of 'looking up' documents,
-we use the terminology of a 'query'. The output of the function is a list of two dtm: query_dtm and ref_dtm.
+we use the terminolog of a 'query'. The output of the function is a list of two dtm: query_dtm and ref_dtm.
 Both dtms have the exact same columns that contain the query terms.
 The values in query_dtm are by default tfidf weighted, and the values in ref_dtm are binary.
  

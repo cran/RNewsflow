@@ -5,7 +5,7 @@ cp_idf_matrix <- function(dtm, min_docfreq=1, max_docprob=1, min_obs_exp=0) {
   simmat = Matrix::drop0(simmat)
   simmat = Matrix::tril(simmat) ## only the lower triangle is used in the cp_lookup similarity measure
   
-  simmat = methods::as(simmat, 'dgTMatrix')
+  simmat = methods::as(methods::as(simmat, 'generalMatrix'), 'TsparseMatrix')
   simmat@x = log(nrow(dtm) / simmat@x)
   
   term_idf = diag(simmat)
@@ -14,7 +14,7 @@ cp_idf_matrix <- function(dtm, min_docfreq=1, max_docprob=1, min_obs_exp=0) {
   diag(simmat) = term_idf
   
   simmat = Matrix::drop0(simmat)
-  methods::as(simmat, 'dgCMatrix')
+  methods::as(simmat, 'CsparseMatrix')
 }
 
 prepare_cp_lookup_matrix <- function(m, m2, idf_from = c('m','m2','both')) {
@@ -26,7 +26,7 @@ prepare_cp_lookup_matrix <- function(m, m2, idf_from = c('m','m2','both')) {
     } else {
       terms = colnames(m)
       if (!identical(terms, colnames(m2))) 
-        m2 = methods::as(reindexTerms(m2, terms), 'dgCMatrix')
+        m2 = as(reindexTerms(m2, terms), 'CsparseMatrix')
       
       if (idf_from == 'both')
         simmat = cp_idf_matrix(rbind(m, m2))
